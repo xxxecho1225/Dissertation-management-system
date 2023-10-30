@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发布作业</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" th:href="@{/css/element.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header th:replace="common::el-hearder">
+        </el-header>
+        <el-container>
+            <el-aside th:replace="common::el-aside">
+            </el-aside>
+            <el-main>
+                <el-card shadow="never">
+                    <div slot="header" class="clearfix">
+                        <span>发布作业</span>
+                        <el-button @click="createVisible = true" style="float: right; padding: 3px 0" type="text">
+                            发布作业
+                        </el-button>
+                    </div>
+                    <el-table
+                            :data="tableData.list"
+                            border
+                            style="width: 100%">
+                        <el-table-column
+                                type="index"
+                                label="序号"
+                                width="50">
+                        </el-table-column>
+                        <el-table-column
+                                prop="description"
+                                label="作业描述"
+                                width="180">
+                        </el-table-column>
+                        <el-table-column
+                                prop="publishTime"
+                                label="布置时间"
+                                width="180">
+                        </el-table-column>
+                        <el-table-column
+                                prop="endTime"
+                                label="截止时间">
+                        </el-table-column>
+                        <el-table-column
+                                prop="uname"
+                                label="布置人">
+                        </el-table-column>
+                        <el-table-column
+                                prop="commitNum"
+                                label="已提交人数">
+                        </el-table-column>
+                        <el-table-column
+                                width="300px"
+                                label="操作">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="small" @click="showModify(scope.row)">修改</el-button>
+                                <el-button type="danger" size="small" @click="deleteTaskById(scope.row.id)">删除
+                                </el-button>
+                                <el-button type="info" size="small" @click="showAnswerList(scope.row.id)">提交列表
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                        </el-table-column>
+                    </el-table>
+                    <div style="margin-top: 18px;display: flex;justify-content: flex-end">
+                        <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :current-page="currentPage"
+                                @current-change="pageChange"
+                                :page-size="pageSize"
+                                :total="tableData.total_count">
+                        </el-pagination>
+                    </div>
+                </el-card>
+            </el-main>
+        </el-container>
+    </el-container>
+
+
+    <el-dialog
+            :visible.sync="createVisible"
+            title="发布作业"
+            width="30%">
+        <el-form ref="form" :model="taskForm" label-width="80px">
+            <el-form-item label="作业描述">
+                <el-input v-model="taskForm.description"></el-input>
+            </el-form-item>
+            <el-form-item label="截止时间">
+                <el-date-picker
+                        value-format="yyyy-MM-dd hh:mm:ss"
+                        v-model="taskForm.endTime"
+                        type="datetime"
+                        placeholder="选择日期时间">
+                </el-date-picker>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+            <el-button size="small" @click="createVisible =false">取消</el-button>
+            <el-button type="primary" size="small" @click="submitTaskForm">立即创建</el-button>
+        </span>
+    </el-dialog>
+
+
+    <el-dialog
+            :visible.sync="modifyVisible"
+            title="编辑作业"
+            width="30%">
+        <el-form ref="form" :model="currTask" label-width="80px">
+            <el-form-item label="作业描述">
+                <el-input v-model="currTask.description"></el-input>
+            </el-form-item>
+            <el-form-item label="截止时间">
+                <el-date-picker
+                        value-format="yyyy-MM-dd hh:mm:ss"
+                        v-model="currTask.endTime"
+                        type="datetime"
+                        placeholder="选择日期时间">
+                </el-date-picker>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+            <el-button size="small" @click="modifyVisible =false">取消</el-button>
+            <el-button type="primary" size="small" @click="modifyTaskForm">立即创建</el-button>
+        </span>
+    </el-dialog>
+
+
+    <el-dialog
+            :visible.sync="submitListVisible"
+            title="提交列表"
+            width="50%">
+        <el-table
+                :data="answerList"
+                border
+                style="width: 100%">
+            <el-table-column
+                    type="index"
+                    label="序号"
+                    width="50">
+            </el-table-column>
+            <el-table-column
+                    prop="description"
+                    label="作业描述"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="user_name"
+                    label="学生姓名"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="create_time"
+                    label="提交时间">
+            </el-table-column>
+        </el-table>
+        <span slot="footer" class="dialog-footer">
+            <el-button size="small" @click="submitListVisible = false">关闭</el-button>
+        </span>
+    </el-dialog>
+
+
+</div>
+</body>
+<!-- import Vue before Element -->
+<script th:src="@{/js/vue.js}"></script>
+<!-- import JavaScript -->
+<script th:src="@{/js/element.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+<script>
+    const app = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                taskForm: {
+                    description: '',
+                    endTime: ''
+                },
+                createVisible: false,
+                tableData: [],
+                loadTaskData: false,
+                submitListVisible: false,
+                modifyVisible: false,
+                answerList: [],
+                currTask: {},
+                currentPage: 1,
+                pageSize: 10
+            }
+        },
+        created: function () {
+            this.fetchTaskList();
+        },
+        methods: {
+            showAnswerList: async function (id) {
+                const {data: res} = await axios({
+                    url: "/api/task/answer-list/" + id,
+                    method: "get",
+                })
+                if (res.code === 200) {
+                    this.answerList = res["data"];
+                } else {
+                    this.$message.error(res.msg)
+                }
+                this.submitListVisible = true;
+            },
+            pageChange: function (pageNum) {
+                this.currentPage = pageNum;
+                this.fetchTaskList()
+            },
+            fetchTaskList: async function () {
+                this.loadTaskData = true
+                const {data: res} = await axios({
+                    url: "/api/task/list?page_num=" + this.currentPage + "&page_size="+this.pageSize,
+                    method: "get",
+                })
+                if (res.code === 200) {
+                    this.tableData = res["data"];
+                } else {
+                    this.$message.error(res.msg)
+                }
+                this.loadTaskData = false;
+            },
+            deleteTaskById: async function (taskId) {
+                const {data: res} = await axios({
+                    url: "/api/task/" + taskId,
+                    method: "delete",
+                })
+                if (res.code === 200) {
+                    this.$message.success(res.msg)
+                    await this.fetchTaskList();
+                    return;
+                }
+                this.$message.error(res.msg)
+            },
+            submitTaskForm: async function () {
+                const {data: res} = await axios({
+                    url: "/api/task",
+                    method: "post",
+                    // 自定义请求头
+                    headers: {'content-type': 'application/json;'},
+                    data: this.taskForm
+                })
+                if (res.code === 200) {
+                    this.$message.success(res.msg)
+                    await this.fetchTaskList();
+                    this.submitListVisible = false;
+                    return;
+                }
+                this.$message.error(res.msg)
+            },
+            showModify: function (row) {
+                this.currTask = row;
+                this.modifyVisible = true;
+            },
+            modifyTaskForm: async function () {
+                const {data: res} = await axios({
+                    url: "/api/task",
+                    method: "put",
+                    // 自定义请求头
+                    headers: {'content-type': 'application/json;'},
+                    data: this.currTask
+                })
+                if (res.code === 200) {
+                    this.$message.success(res.msg)
+                    await this.fetchTaskList();
+                    this.modifyVisible = false;
+                    return;
+                }
+                this.$message.error(res.msg)
+            },
+        }
+    })
+</script>
+</html>

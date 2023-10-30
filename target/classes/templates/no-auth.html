@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>没有权限</title>
+    <link rel="stylesheet" th:href="@{/css/element.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div id="app" style="justify-content: center;display: flex;align-items: center">
+    <div id="login" style="width: 30%">
+        <el-card shadow="always">
+           <div style="display: flex;justify-content: space-between">
+               <span>没有权限访问</span> <el-button type="primary" size="small" @click="back">回到上一级</el-button>
+           </div>
+        </el-card>
+    </div>
+</div>
+</body>
+<!-- import Vue before Element -->
+<script th:src="@{/js/vue.js}"></script>
+<!-- import JavaScript -->
+<script th:src="@{/js/element.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+            }
+        },
+        methods: {
+            back:function (){
+                window.history.go(-1);
+            }
+        }
+    })
+</script>
+</html>

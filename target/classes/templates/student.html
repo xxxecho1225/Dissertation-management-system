@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的作业</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" th:href="@{/css/element.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header th:replace="common::el-hearder">
+        </el-header>
+        <el-container>
+            <el-aside th:replace="common::el-aside">
+            </el-aside>
+            <el-main>
+                <el-card shadow="never">
+                    <div slot="header" class="clearfix">
+                        <span>我的作业</span>
+                    </div>
+                    <el-table
+                            :data="tableData"
+                            border
+                            style="width: 100%">
+                        <el-table-column
+                                type="index"
+                                label="序号"
+                                width="50">
+                        </el-table-column>
+                        <el-table-column
+                                prop="description"
+                                label="作业描述"
+                                width="180">
+                        </el-table-column>
+                        <el-table-column
+                                prop="publishTime"
+                                label="布置时间"
+                                width="180">
+                        </el-table-column>
+                        <el-table-column
+                                prop="endTime"
+                                label="截止时间">
+                        </el-table-column>
+                        <el-table-column
+                                prop="uname"
+                                label="布置人">
+                        </el-table-column>
+                        <el-table-column
+                                prop="commitNum"
+                                label="已提交人数">
+                        </el-table-column>
+                        <el-table-column
+                                prop="submitStatus"
+                                label="状态">
+                            <template slot-scope="scope">
+                                <el-tag v-if="scope.row.submitStatus == 0" type="danger">未做</el-tag>
+                                <el-tag v-else type="success">已提交</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                                align="center"
+                                width="300px"
+                                label="操作">
+                            <template slot-scope="scope">
+                                <el-button type="primary" v-if="scope.row.submitStatus == 0" size="small"
+                                           @click="openWriteTaskDialog(scope.row)">提交作业
+                                </el-button>
+                                <el-button type="primary" v-else size="small" disabled>已提交</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-card>
+            </el-main>
+        </el-container>
+    </el-container>
+
+
+    <el-dialog
+            :visible.sync="createVisible"
+            title="提交作业"
+            width="30%">
+        <el-form ref="form" :model="answerForm">
+            <el-form-item label="作业描述">
+                <el-input v-model="currTask.description" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="截止时间">
+                <el-input v-model="currTask.endTime" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="作业内容">
+                <el-input type="textarea" v-model="answerForm.content"></el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+            <el-button size="small" @click="createVisible =false">取消</el-button>
+            <el-button type="primary" size="small" @click="submitTaskAnswer">立即创建</el-button>
+        </span>
+    </el-dialog>
+</div>
+</body>
+<!-- import Vue before Element -->
+<script th:src="@{/js/vue.js}"></script>
+<!-- import JavaScript -->
+<script th:src="@{/js/element.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+<script>
+    const app = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                answerForm: {
+                    content: '',
+                    tId: ''
+                },
+                createVisible: false,
+                tableData: [],
+                loadTaskData: false,
+                currTask: {}
+            }
+        },
+        created: function () {
+            this.fetchTaskList();
+        },
+        methods: {
+            fetchTaskList: async function () {
+                this.loadTaskData = true
+                const {data: res} = await axios({
+                    url: "/api/task/student/list",
+                    method: "get",
+                })
+                if (res.code === 200) {
+                    this.tableData = res["data"];
+                } else {
+                    this.$message.error(res.msg)
+                }
+                this.loadTaskData = false;
+            },
+            openWriteTaskDialog: function (task) {
+                this.currTask = task;
+                this.createVisible = true;
+                this.answerForm.tId = task.id;
+            },
+            submitTaskAnswer: async function () {
+                try {
+                    const {data: res} = await axios({
+                        url: "/api/task/answer",
+                        method: "post",
+                        // 自定义请求头
+                        headers: {'content-type': 'application/x-www-form-urlencoded'},
+                        data: this.answerForm
+                    })
+                    if (res.code === 200) {
+                        this.$message.success(res.msg)
+                        this.createVisible = false;
+                        await this.fetchTaskList();
+                        return;
+                    }
+                    this.$message.error(res.msg)
+                } catch (e) {
+                    this.$message.error("插入异常")
+                }
+
+            }
+        }
+    })
+</script>
+</html>

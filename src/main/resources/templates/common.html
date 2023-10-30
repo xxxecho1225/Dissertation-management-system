@@ -1,0 +1,72 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<body>
+<el-aside th:fragment="el-aside" width="200px">
+    <el-menu
+            class="el-menu-vertical-demo"
+            background-color="#D3DCE6"
+            text-color="#000"
+            active-text-color="#ffd04b">
+
+        <el-submenu index="1" th:if="${session.curr_user.getRole() == 2}">
+            <template slot="title">布置作业</template>
+            <a href="/teacher_zhoukai" >
+                <el-menu-item index="1-1">
+                    <i class="el-icon-document"></i>
+                    <span slot="title">布置作业</span>
+                </el-menu-item>
+            </a>
+        </el-submenu>
+
+
+        <el-submenu index="2" th:if="${session.curr_user.getRole() == 3}">
+            <template slot="title">写作业</template>
+            <a href="/student_zhoukai" >
+                <el-menu-item index="2-1">
+                    <i class="el-icon-setting"> </i>
+                    <span slot="title">写作业</span>
+                </el-menu-item>
+            </a>
+        </el-submenu>
+
+        <el-submenu index="3" th:if="${session.curr_user.getRole() == 1}">
+            <template slot="title">系统日志管理</template>
+            <a href="/system-log_zhoukai" >
+                <el-menu-item index="3-1">
+                    <i class="el-icon-setting"></i>
+                    <span slot="title">系统日志</span>
+                </el-menu-item>
+            </a>
+        </el-submenu>
+
+
+        <el-submenu index="4">
+            <template slot="title">修改密码</template>
+            <a href="/modify-password_zhoukai">
+                <el-menu-item index="4-1">
+                    <i class="el-icon-setting"></i>
+                    <span slot="title">修改密码</span>
+                </el-menu-item>
+            </a>
+        </el-submenu>
+    </el-menu>
+</el-aside>
+
+<el-header th:fragment="el-hearder">
+    <div style="display: flex;justify-content: space-between">
+        <span>
+            学生作业管理系统
+        </span>
+        <div>
+            姓名：<span th:text="${session.curr_user.getUserName()}"></span>
+            角色：<span th:if="${session.curr_user.getRole() == 1}">管理员</span>
+            <span th:if="${session.curr_user.getRole() == 2}">教师</span>
+            <span th:if="${session.curr_user.getRole() == 3}">学生</span>
+
+            <a href="/logout_zhoukai">
+                <el-button size="small"> 退出</el-button>
+            </a>
+        </div>
+    </div>
+</el-header>
+</body>
+</html>

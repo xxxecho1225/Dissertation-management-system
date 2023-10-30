@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>登录页面</title>
+    <link rel="stylesheet" th:href="@{/css/element.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div id="app" style="justify-content: center;display: flex;align-items: center">
+    <div id="login" style="width: 30%">
+        <el-card shadow="always">
+            <el-form ref="form" :model="loginForm">
+                <el-form-item label="用户名">
+                    <el-input v-model="loginForm.user_name"></el-input>
+                </el-form-item>
+                <el-form-item label="密码">
+                    <el-input type="password" v-model="loginForm.password"></el-input>
+                </el-form-item>
+                <el-form-item label="验证邮箱">
+                    <el-input v-model="loginForm.email">
+                        <el-button slot="append" @click="sendEmail">获取</el-button>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="邮箱验证码">
+                    <el-input v-model="loginForm.auth_code"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="onSubmit">登录</el-button>
+                </el-form-item>
+            </el-form>
+        </el-card>
+    </div>
+</div>
+</body>
+<!-- import Vue before Element -->
+<script th:src="@{/js/vue.js}"></script>
+<!-- import JavaScript -->
+<script th:src="@{/js/element.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                loginForm: {
+                    user_name: '',
+                    password: '',
+                    auth_code: '',
+                    email: ''
+                }
+            }
+        },
+        methods: {
+            onSubmit: async function () {
+                const {data: res} = await axios({
+                    url: "/api/login",
+                    method: "post",
+                    // 自定义请求头
+                    headers: {'content-type': 'application/x-www-form-urlencoded'},
+                    data: this.loginForm
+                })
+                if (res.code === 200) {
+                    this.$message.success("登录成功");
+                    window.location.href = res.data["jump_url"]
+                    return;
+                }
+                this.$message.error(res.msg)
+            },
+            sendEmail: async function () {
+                if (this.loginForm && this.loginForm.email.trim().length === 0) {
+                    this.$message.error("邮箱不能为空")
+                    return;
+                }
+                const {data: res} = await axios({
+                    url: "/api/login/send",
+                    method: "post",
+                    // 自定义请求头
+                    headers: {'content-type': 'application/x-www-form-urlencoded'},
+                    data: {
+                        email: this.loginForm.email
+                    }
+                })
+                if (res.code === 200) {
+                    this.$message.success("发送成功，请注意查收")
+                    return;
+                }
+                this.$message.error("发送失败，请稍后再试")
+            }
+        }
+    })
+</script>
+</html>
